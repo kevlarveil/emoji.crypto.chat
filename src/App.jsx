@@ -4,7 +4,7 @@ import {
   collection, addDoc, onSnapshot, query, serverTimestamp, setDoc, doc 
 } from 'firebase/firestore';
 
-// --- ENCRYPTION LOGIC (Symmetric XOR Cipher) ---
+// --- ENCRYPTION LOGIC (XOR Cipher with UTF-8 Support) ---
 const xorEncrypt = (str, key) => {
   let output = '';
   for (let i = 0; i < str.length; i++) {
@@ -12,19 +12,7 @@ const xorEncrypt = (str, key) => {
     const encryptedChar = str.charCodeAt(i) ^ keyChar;
     output += String.fromCharCode(encryptedChar);
   }
-  // Base64 encode for safe storage in Firestore
-  return btoa(output);
-};
-
-// --- ENCRYPTION LOGIC (Symmetric XOR Cipher with UTF-8) ---
-const xorEncrypt = (str, key) => {
-  let output = '';
-  for (let i = 0; i < str.length; i++) {
-    const keyChar = key.charCodeAt(i % key.length);
-    const encryptedChar = str.charCodeAt(i) ^ keyChar;
-    output += String.fromCharCode(encryptedChar);
-  }
-  // Use TextEncoder for UTF-8 support, then Base64 encode
+  // Use TextEncoder for UTF-8 support
   const encoded = new TextEncoder().encode(output);
   return btoa(String.fromCharCode.apply(null, encoded));
 };
@@ -49,6 +37,11 @@ const xorDecrypt = (base64Str, key) => {
   }
 };
 
+const isOnlyEmojis = (str) => {
+  const emojiRegex = /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\u200D)+/gu;
+  return str.trim().length > 0 && str.replace(emojiRegex, '').trim().length === 0;
+};
+
 export default function EmojiCryptoChat() {
   const [nickname, setNickname] = useState('');
   const [userId, setUserId] = useState('');
@@ -60,7 +53,7 @@ export default function EmojiCryptoChat() {
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
 
-  // Encryption key based on project ID
+  // Encryption key
   const encryptionKey = 'crypto-money-talk';
 
   // Initialize Firebase Auth
@@ -105,11 +98,6 @@ export default function EmojiCryptoChat() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const isOnlyEmojis = (str) => {
-    const emojiRegex = /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\u200D)+/gu;
-    return str.trim().length > 0 && str.replace(emojiRegex, '').trim().length === 0;
-  };
 
   const saveNickname = async () => {
     if (!modalInput.trim() || modalInput.trim().length < 2) {
@@ -299,7 +287,7 @@ export default function EmojiCryptoChat() {
                     {decryptedContent}
                   </div>
                   <div className="text-xs text-opacity-75 mt-1 pt-1 border-t border-gray-400 border-opacity-30 italic">
-                    {msg.timestamp ? new Date(msg.timestamp.toMillis()).toLocaleTimeString() : 'now'}
+                    {msg.timestamp ? new Date(msg.timestamp.toMillis()).toLocaleTimeString() : 'pending'}
                   </div>
                 </div>
               </div>
