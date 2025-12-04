@@ -37,11 +37,11 @@ const xorDecrypt = (base64Str, key) => {
 };
 
 const isOnlyEmojis = (str) => {
-  const emojiRegex = /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\u200D)+/gu;
+  const emojiRegex = /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\u200D|[\d%.\-+])+/gu;
   return str.trim().length > 0 && str.replace(emojiRegex, '').trim().length === 0;
 };
 
-export default function CryptoSignalsChat() {
+export default function TradingSignalsChat() {
   const [currentRoom, setCurrentRoom] = useState(null);
   const [roomInput, setRoomInput] = useState('');
   const [nickname, setNickname] = useState('');
@@ -159,7 +159,7 @@ export default function CryptoSignalsChat() {
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
     if (!isOnlyEmojis(newMessage)) {
-      setNotification({ type: 'error', message: '❌ Signals only (emojis)! 🔒' });
+      setNotification({ type: 'error', message: '❌ Signals only (emojis & numbers)! 🔒' });
       setTimeout(() => setNotification(null), 3000);
       return;
     }
@@ -171,7 +171,6 @@ export default function CryptoSignalsChat() {
         userId,
         userNickname: nickname,
         encryptedContent: encryptedContent,
-        isPinned: false,
         timestamp: serverTimestamp()
       });
       setNewMessage('');
@@ -184,7 +183,7 @@ export default function CryptoSignalsChat() {
 
   const editMessage = async (msgId) => {
     if (!editingText.trim() || !isOnlyEmojis(editingText)) {
-      setNotification({ type: 'error', message: 'Emojis only!' });
+      setNotification({ type: 'error', message: 'Emojis & numbers only!' });
       setTimeout(() => setNotification(null), 3000);
       return;
     }
@@ -219,10 +218,20 @@ export default function CryptoSignalsChat() {
   };
 
   const signalEmojis = [
-    '🟢', '🔴', '⏸️', '📈', '📉', '💰', '💎', '🚀',
-    '⚠️', '✅', '❌', '🔥', '❄️', '💧', '⛓️', '🏦',
-    '💳', '💵', '📱', '⬆️', '⬇️', '↔️', '🪙', '₿',
-    '⛏️', '🕯️', '📊', '💼', '🎯', '⚡', '🌟', '🔔'
+    '🟢', '🔴', '⏸️', '📈', '📉', '⬆️', '⬇️', '🚀',
+    '🔥', '⚡', '💰', '💵', '💳', '🏦', '🪙', '₿',
+    '✅', '❌', '⚠️', '🔔', '💎', '📊', '🕯️', '⛓️'
+  ];
+
+  const hotSignals = [
+    { emoji: '🟢📈5%', label: '🟢📈5%' },
+    { emoji: '🔴⬇️-3%💰', label: '🔴⬇️-3%' },
+    { emoji: '🔥⚡💳', label: '🔥⚡💳' },
+    { emoji: '🕯️📊20%₿', label: '🕯️📊20%' },
+    { emoji: '⚠️🔔💎', label: '⚠️🔔💎' },
+    { emoji: '🚀⬆️✅', label: '🚀⬆️✅' },
+    { emoji: '❌⬇️🔴', label: '❌⬇️🔴' },
+    { emoji: '⏸️📈💰', label: '⏸️📈💰' }
   ];
 
   const getStatusEmoji = (status) => {
@@ -236,8 +245,8 @@ export default function CryptoSignalsChat() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <p className="text-xl font-medium text-green-400">📊 Loading signals... 🔗</p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-950 via-emerald-950 to-black">
+        <p className="text-xl font-medium text-amber-400">📊 Loading signals... 🔗</p>
       </div>
     );
   }
@@ -248,9 +257,9 @@ export default function CryptoSignalsChat() {
       <div className="flex flex-col h-screen max-h-screen bg-gradient-to-br from-gray-950 via-emerald-950 to-black">
         {notification && (
           <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-xl text-white max-w-sm ${
-            notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'
           }`}>
-            <p className="font-bold">{notification.type === 'success' ? '✅' : '❌'} {notification.message}</p>
+            <p className="font-bold">{notification.message}</p>
           </div>
         )}
 
@@ -290,7 +299,7 @@ export default function CryptoSignalsChat() {
                 onKeyDown={(e) => e.key === 'Enter' && joinRoom()}
                 placeholder="e.g., AAPL-STOCKS or BTC-CRYPTO"
                 maxLength={20}
-                className="w-full p-3 border-2 border-emerald-600 rounded-lg focus:border-amber-500 focus:outline-none text-lg font-bold bg-gray-950 text-amber-400"
+                className="w-full p-3 border-2 border-emerald-600 rounded-lg focus:border-amber-500 focus:outline-none text-lg font-bold bg-gray-900 text-amber-400"
               />
               <p className="text-xs text-emerald-400">Join a private trading room for any asset class</p>
             </div>
@@ -320,28 +329,28 @@ export default function CryptoSignalsChat() {
 
         {isNicknameModalOpen && (
           <div className="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center z-40 p-4">
-            <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm p-6 border border-green-500">
-              <h2 className="text-xl font-bold text-green-400 border-b border-green-500 pb-3 mb-4">🎯 SET TRADER ID</h2>
+            <div className="bg-gray-950 rounded-xl shadow-2xl w-full max-w-sm p-6 border-2 border-amber-500">
+              <h2 className="text-xl font-bold text-amber-400 border-b border-amber-500 pb-3 mb-4">🎯 SET TRADER ID</h2>
               <input
                 type="text"
                 value={modalInput}
                 onChange={(e) => setModalInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && saveNickname()}
                 maxLength={15}
-                className="w-full p-3 border-2 border-green-500 rounded-lg focus:outline-none text-lg font-bold bg-gray-900 text-green-400 mb-4"
+                className="w-full p-3 border-2 border-emerald-600 rounded-lg focus:outline-none text-lg font-bold bg-gray-900 text-amber-400 mb-4"
                 placeholder="TRADER123"
                 autoFocus
               />
               <div className="flex justify-end space-x-3 mt-4">
                 <button
                   onClick={() => setIsNicknameModalOpen(false)}
-                  className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600"
+                  className="px-4 py-2 bg-gray-800 text-emerald-400 rounded-lg hover:bg-gray-700 border border-emerald-600"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={saveNickname}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold"
                 >
                   Save
                 </button>
@@ -355,7 +364,7 @@ export default function CryptoSignalsChat() {
 
   // Chat Room Screen
   return (
-    <div className="flex flex-col h-screen max-h-screen bg-gray-900 font-mono text-green-400">
+    <div className="flex flex-col h-screen max-h-screen bg-gray-950 font-mono text-amber-400">
       {notification && (
         <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-xl text-white max-w-sm ${
           notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'
@@ -365,17 +374,17 @@ export default function CryptoSignalsChat() {
       )}
 
       {/* Header */}
-      <header className="p-4 border-b-2 border-green-500 bg-gray-800 shadow-lg z-10">
+      <header className="p-4 border-b-2 border-emerald-600 bg-gray-900 shadow-lg z-10">
         <div className="flex justify-between items-center mb-3">
           <div>
-            <h1 className="text-2xl font-extrabold text-green-400">📊 {currentRoom} 💼</h1>
-            <p className="text-sm text-gray-400">Trader: {nickname} | Any Asset Class</p>
+            <h1 className="text-2xl font-extrabold text-amber-400">📊 {currentRoom} 💼</h1>
+            <p className="text-sm text-emerald-400">Trader: {nickname} | Any Asset Class</p>
           </div>
           <div className="flex items-center space-x-2">
             <select
               value={userStatus}
               onChange={(e) => setUserStatus(e.target.value)}
-              className="px-3 py-2 bg-gray-700 rounded-lg text-sm font-semibold text-green-400 border border-green-500"
+              className="px-3 py-2 bg-gray-800 rounded-lg text-sm font-semibold text-amber-400 border-2 border-emerald-600"
             >
               <option value="online">🟢 ONLINE</option>
               <option value="away">🟡 AWAY</option>
@@ -383,7 +392,7 @@ export default function CryptoSignalsChat() {
             </select>
             <button
               onClick={leaveRoom}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg border border-red-500"
+              className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white font-bold rounded-lg border-2 border-red-600"
             >
               EXIT
             </button>
@@ -391,13 +400,13 @@ export default function CryptoSignalsChat() {
         </div>
 
         {/* Online Users */}
-        <div className="bg-gray-700 p-3 rounded-lg border border-green-500">
-          <p className="text-xs font-semibold text-gray-400 mb-2">ACTIVE TRADERS ({roomUsers.length}):</p>
+        <div className="bg-gray-800 p-3 rounded-lg border-2 border-emerald-600">
+          <p className="text-xs font-semibold text-emerald-400 mb-2">ACTIVE TRADERS ({roomUsers.length}):</p>
           <div className="flex flex-wrap gap-2">
             {roomUsers.map((user) => (
-              <div key={user.userId} className="bg-gray-800 px-3 py-1 rounded-full text-sm flex items-center space-x-1 border border-green-500">
+              <div key={user.userId} className="bg-gray-900 px-3 py-1 rounded-full text-sm flex items-center space-x-1 border-2 border-emerald-600">
                 <span>{getStatusEmoji(user.status)}</span>
-                <span className="font-semibold text-green-400">{user.nickname}</span>
+                <span className="font-semibold text-amber-400">{user.nickname}</span>
               </div>
             ))}
           </div>
@@ -405,12 +414,12 @@ export default function CryptoSignalsChat() {
       </header>
 
       {/* Messages */}
-      <div className="flex-grow p-4 overflow-y-auto space-y-3 bg-gray-900">
+      <div className="flex-grow p-4 overflow-y-auto space-y-3 bg-gray-950">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-600">
+          <div className="flex flex-col items-center justify-center h-full text-gray-700">
             <span className="text-6xl mb-3">📊</span>
-            <p className="text-xl font-medium">No signals yet</p>
-            <p className="text-sm">Share encrypted trading signals below</p>
+            <p className="text-xl font-medium text-emerald-600">No signals yet</p>
+            <p className="text-sm text-emerald-500">Share encrypted trading signals below</p>
           </div>
         ) : (
           messages.map((msg) => {
@@ -423,10 +432,10 @@ export default function CryptoSignalsChat() {
               <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-xs p-3 rounded-lg border-2 ${
                   isMine
-                    ? 'bg-gray-800 border-green-400 rounded-br-none'
-                    : 'bg-gray-800 border-blue-500 rounded-tl-none'
+                    ? 'bg-gray-900 border-amber-500 rounded-br-none'
+                    : 'bg-gray-900 border-emerald-600 rounded-tl-none'
                 }`}>
-                  <div className="text-xs font-semibold mb-1 text-gray-400">{isMine ? 'YOU' : msg.userNickname}</div>
+                  <div className="text-xs font-semibold mb-1 text-emerald-400">{isMine ? 'YOU' : msg.userNickname}</div>
                   
                   {editingMessageId === msg.id ? (
                     <div className="flex gap-2 mb-2">
@@ -434,25 +443,25 @@ export default function CryptoSignalsChat() {
                         type="text"
                         value={editingText}
                         onChange={(e) => setEditingText(e.target.value)}
-                        className="flex-grow p-2 bg-gray-700 border border-green-500 rounded text-green-400"
+                        className="flex-grow p-2 bg-gray-800 border-2 border-emerald-600 rounded text-amber-400"
                       />
                       <button
                         onClick={() => editMessage(msg.id)}
-                        className="px-2 py-1 bg-green-600 text-white text-xs rounded font-bold"
+                        className="px-2 py-1 bg-green-700 text-white text-xs rounded font-bold"
                       >
                         ✓
                       </button>
                       <button
                         onClick={() => setEditingMessageId(null)}
-                        className="px-2 py-1 bg-red-600 text-white text-xs rounded font-bold"
+                        className="px-2 py-1 bg-red-700 text-white text-xs rounded font-bold"
                       >
                         ✕
                       </button>
                     </div>
                   ) : (
                     <>
-                      <div className="text-3xl leading-snug break-words mb-2">{decryptedContent}</div>
-                      <div className="flex justify-between items-center text-xs text-gray-500">
+                      <div className="text-3xl leading-snug break-words mb-2 text-amber-400">{decryptedContent}</div>
+                      <div className="flex justify-between items-center text-xs text-gray-600">
                         <span>{msg.timestamp ? new Date(msg.timestamp.toMillis()).toLocaleTimeString() : 'pending'}</span>
                         {isMine && (
                           <div className="flex gap-1">
@@ -485,13 +494,28 @@ export default function CryptoSignalsChat() {
       </div>
 
       {/* Input */}
-      <footer className="p-4 border-t-2 border-green-500 bg-gray-800 shadow-2xl z-10">
-        <div className="mb-3 flex flex-wrap gap-2">
+      <footer className="p-4 border-t-2 border-emerald-600 bg-gray-900 shadow-2xl z-10">
+        {/* 8 Hot Signal Buttons */}
+        <div className="mb-3 grid grid-cols-4 gap-2">
+          {hotSignals.map((sig, idx) => (
+            <button
+              key={idx}
+              onClick={() => setNewMessage(sig.emoji)}
+              className="px-2 py-2 bg-gray-800 hover:bg-emerald-900 text-amber-400 font-bold rounded-lg border-2 border-emerald-600 text-xs transition"
+              title={sig.emoji}
+            >
+              {sig.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Signal Emojis */}
+        <div className="mb-3 flex flex-wrap gap-1">
           {signalEmojis.map(emoji => (
             <button
               key={emoji}
               onClick={() => setNewMessage(prev => prev + emoji)}
-              className="text-2xl p-1 rounded-lg bg-gray-700 hover:bg-gray-600 border border-green-500 transition transform hover:scale-110"
+              className="text-xl p-1 rounded-lg bg-gray-800 hover:bg-emerald-900 border border-emerald-600 transition transform hover:scale-110"
               title={`Add ${emoji}`}
             >
               {emoji}
@@ -499,6 +523,30 @@ export default function CryptoSignalsChat() {
           ))}
         </div>
 
+        {/* Number Pad */}
+        <div className="mb-3 grid grid-cols-5 gap-1">
+          {['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '%', '.', '-', '+', 'DEL'].map(num => (
+            <button
+              key={num}
+              onClick={() => {
+                if (num === 'DEL') {
+                  setNewMessage(prev => prev.slice(0, -1));
+                } else {
+                  setNewMessage(prev => prev + num);
+                }
+              }}
+              className={`px-2 py-1 text-sm font-bold rounded border-2 transition ${
+                num === 'DEL'
+                  ? 'bg-red-700 hover:bg-red-800 border-red-600 text-white'
+                  : 'bg-gray-800 hover:bg-gray-700 border-emerald-600 text-amber-400'
+              }`}
+            >
+              {num}
+            </button>
+          ))}
+        </div>
+
+        {/* Message Input */}
         <div className="flex space-x-2">
           <input
             type="text"
@@ -506,7 +554,7 @@ export default function CryptoSignalsChat() {
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
             placeholder="Send signal... 🔒"
-            className="flex-grow p-3 border-2 border-green-500 rounded-lg focus:border-green-300 focus:outline-none bg-gray-800 text-green-400 font-bold"
+            className="flex-grow p-3 border-2 border-emerald-600 rounded-lg focus:border-amber-500 focus:outline-none bg-gray-900 text-amber-400 font-bold"
             style={{ height: '48px' }}
           />
           <button
@@ -514,8 +562,8 @@ export default function CryptoSignalsChat() {
             disabled={!newMessage.trim() || !isOnlyEmojis(newMessage)}
             className={`px-4 py-3 rounded-lg font-bold transition border-2 ${
               !newMessage.trim() || !isOnlyEmojis(newMessage)
-                ? 'bg-gray-700 border-gray-600 cursor-not-allowed text-gray-500'
-                : 'bg-green-600 hover:bg-green-700 border-green-500 text-white shadow-lg'
+                ? 'bg-gray-800 border-gray-700 cursor-not-allowed text-gray-500'
+                : 'bg-emerald-700 hover:bg-emerald-800 border-emerald-600 text-white shadow-lg'
             }`}
           >
             SEND 📤
